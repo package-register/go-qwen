@@ -1,4 +1,4 @@
-name: publish-go
+name: Go Release with PAT
 
 on:
   push:
@@ -13,18 +13,20 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+        run: |
+          git clone https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }}.git repo
+          cd repo
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: 'stable'
+        run: |
+          sudo apt update && sudo apt install -y golang
+          go version
 
       - name: Generate Version Tag
-        id: tag
         run: |
+          cd repo
           git fetch --tags
           latest_tag=$(git tag --sort=-v:refname | head -n 1)
           if [[ -z "$latest_tag" ]]; then
@@ -36,12 +38,8 @@ jobs:
           echo "Generated tag: $new_tag"
 
       - name: Create and Push Git Tag
-        env:
-          GIT_AUTH: ${{ secrets.PAT_TOKEN }}
         run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git remote set-url origin https://x-access-token:${GIT_AUTH}@github.com/${{ github.repository }}.git
+          cd repo
           git tag $NEW_TAG
           git push origin $NEW_TAG
 
@@ -52,5 +50,7 @@ jobs:
 
       - name: Run GoReleaser
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: goreleaser release --clean
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: |
+          cd repo
+          goreleaser release --clean
