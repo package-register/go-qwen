@@ -3,6 +3,7 @@
 PROJECT_NAME ?= $(shell basename "$(PWD)")
 VERSION_FILE = VERSION
 CHANGELOG_FILE = CHANGELOG.md
+BUMP_SCRIPT = bump_version.sh
 
 # Default target: Show help
 .PHONY: help
@@ -31,30 +32,17 @@ endif
 version:
 	@cat $(VERSION_FILE)
 
-define bump_version
-	current_version := $(shell cat $(VERSION_FILE)); \
-	parts := $(shell echo "$$current_version" | sed -e 's/^v//' | tr '.' '\n'); \
-	major := $(word 1,$$parts); \
-	minor := $(word 2,$$parts); \
-	patch := $(word 3,$$parts); \
-	new_major := $$(expr $$major + $(1)); \
-	new_minor := $$(expr $$minor + $(2)); \
-	new_patch := $$(expr $$patch + $(3)); \
-	echo "v$$new_major.$$new_minor.$$new_patch" > $(VERSION_FILE); \
-	@echo "Bumped version to v$$new_major.$$new_minor.$$new_patch"
-endef
-
 .PHONY: bump-major
 bump-major:
-	$(call bump_version,1,0,0)
+	$(BUMP_SCRIPT) major
 
 .PHONY: bump-minor
 bump-minor:
-	$(call bump_version,0,1,0)
+	$(BUMP_SCRIPT) minor
 
 .PHONY: bump-patch
 bump-patch:
-	$(call bump_version,0,0,1)
+	$(BUMP_SCRIPT) patch
 
 .PHONY: tag
 tag: version
