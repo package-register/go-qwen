@@ -38,14 +38,16 @@ jobs:
         with:
           github-token: ${{ secrets.PAT_TOKEN }}
           script: |
-            const version = await fs.promises.readFile('VERSION', 'utf8');
-            const changelogContent = await fs.promises.readFile('CHANGELOG.md', 'utf8');
+            const fs = require('fs').promises;
+            const version = (await fs.readFile('VERSION', 'utf8')).trim();
+            const changelogContent = await fs.readFile('CHANGELOG.md', 'utf8');
+
             try {
               const { data: release } = await github.rest.repos.createRelease({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                tag_name: version.trim(),
-                name: `Release ${version.trim()}`,
+                tag_name: version,
+                name: `Release ${version}`,
                 body: changelogContent,
                 draft: false,
                 prerelease: false,
@@ -56,4 +58,3 @@ jobs:
             }
         env:
           NODE_OPTIONS: '--experimental-json-modules'
-          fs: require('fs')
